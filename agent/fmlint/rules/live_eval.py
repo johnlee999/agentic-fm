@@ -137,7 +137,16 @@ class LiveEvalError(LintRule):
         if sol_name and sol_name in solutions:
             return solutions[sol_name].get("odata")
 
-        # Fall back to first solution with OData config
+        # The active solution is known but has no OData config: skip live eval.
+        # Falling back to another solution would evaluate these calculations
+        # against a different file, where the referenced layouts and fields do
+        # not exist — every calculation then fails with error 105 and even
+        # trivially valid expressions like "1" are reported as invalid.
+        if sol_name:
+            return None
+
+        # Solution unknown (no CONTEXT.json): fall back to the first configured
+        # OData solution, which is correct for single-solution setups.
         for sol in solutions.values():
             odata = sol.get("odata")
             if odata and odata.get("base_url"):

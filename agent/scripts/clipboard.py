@@ -58,9 +58,12 @@ FM_CLASSES = {
 
 # Map the first XML element found inside an fmxmlsnippet to its clipboard class.
 # Elements that map to 'ut16' are stored as UTF-16 Unicode text, not binary descriptors.
+# Order matters for the regex fallback in detect_class_from_xml: container elements
+# must precede the elements they nest, so 'Group' and 'Script' come before 'Step'.
 XML_ELEMENT_TO_CLASS = {
-    'Step':              'XMSS',
+    'Group':             'XMSC',
     'Script':            'XMSC',
+    'Step':              'XMSS',
     'CustomFunction':    'XMFN',
     'Field':             'XMFD',
     'BaseTable':         'XMTB',
@@ -179,6 +182,8 @@ def detect_class_from_xml(xml_text):
     # Fallback: regex scan for malformed or partially-written XML.
     # Menu elements must be checked before 'Step' — menu XML files contain <Step>
     # elements inside their action blocks, which would otherwise match XMSS first.
+    # The same applies to <Group> and <Script>, which are ordered ahead of 'Step'
+    # in XML_ELEMENT_TO_CLASS so a script folder is not misread as a steps snippet.
     for element in ('CustomMenuSet', 'CustomMenu'):
         if re.search(rf'<{element}[\s>/]', xml_text):
             return 'ut16'
